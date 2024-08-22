@@ -1,0 +1,71 @@
+default:
+  tags: [wolfram]
+
+stages:
+  - get-libraries
+  - build-java
+  - build-image
+  - deploy
+
+get-test-lib:
+  stage: get-libraries
+  only:
+    - dev
+  script:
+    - pwd
+    - cp /home/homeserver/wolfram-single/dev/lib/* ./libs/
+    - sha1sum -b libs/libcalculation.so
+  cache:
+    untracked: true
+
+
+build-java-1:
+  stage: build-java
+  script: mvn package
+  cache:
+    untracked: true
+get-prod-lib:
+  stage: get-libraries
+  only:
+    - main
+  script:
+    - cp /home/homeserver/wolfram-single/prod ./libs
+  cache:
+    untracked: true
+
+build-test:
+  stage: build-image
+  script:
+    - docker build -t amogus:test .
+  only:
+    - dev
+  cache:
+    untracked: true
+
+build-prod:
+  stage: build-image
+  script:
+    - docker build -t amogus:prod .
+  only:
+    - main
+  cache:
+    untracked: true
+
+deploy-test:
+  stage: deploy
+  only:
+    - dev
+  script:
+    - env
+    - docker-compose --profile test up -d
+  cache:
+    untracked: true
+
+deploy-prod:
+  stage: deploy
+  only:
+    - main
+  script:
+    - docker-compose --profile prod up -d
+  cache:
+    untracked: true
